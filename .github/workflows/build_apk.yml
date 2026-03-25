@@ -10,22 +10,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. リポジトリをチェックアウト（action_quest_wifi_fixed.zip が入っている）
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. ZIPを展開
       - name: Extract project ZIP
         run: unzip action_quest_wifi_fixed.zip
 
-      # 3. Java 17
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # 4. Flutter（GitHub Actions側でダウンロード）
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -33,13 +29,13 @@ jobs:
           channel: 'stable'
           cache: true
 
-      # 5. キーストア復元
+      # JKS: printf で改行なしデコード（echoだと改行が混入して壊れる）
       - name: Restore keystore
         working-directory: action_quest_fixed/flutter_app
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/release-key.jks
+          printf '%s' "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/release-key.jks
+          echo "JKS size: $(wc -c < android/release-key.jks) bytes"
 
-      # 6. key.properties 作成
       - name: Create key.properties
         working-directory: action_quest_fixed/flutter_app
         run: |
@@ -50,17 +46,19 @@ jobs:
           storeFile=../release-key.jks
           KEYEOF
 
-      # 7. flutter pub get
+      - name: Fix NDK version
+        working-directory: action_quest_fixed/flutter_app
+        run: |
+          sed -i '/^android {/a\        ndkVersion = "27.0.12077973"' android/app/build.gradle.kts
+
       - name: Flutter pub get
         working-directory: action_quest_fixed/flutter_app
         run: flutter pub get
 
-      # 8. APKビルド
       - name: Build APK
         working-directory: action_quest_fixed/flutter_app
         run: flutter build apk --release
 
-      # 9. APKをダウンロード可能にする
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
