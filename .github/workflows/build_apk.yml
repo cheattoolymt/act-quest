@@ -48,6 +48,10 @@ jobs:
         working-directory: action_quest_fixed_output/flutter_app
         run: flutter pub get
 
+      - name: Generate launcher icons
+        working-directory: action_quest_fixed_output/flutter_app
+        run: dart run flutter_launcher_icons
+
       - name: Build APK
         working-directory: action_quest_fixed_output/flutter_app
         run: flutter build apk --release
