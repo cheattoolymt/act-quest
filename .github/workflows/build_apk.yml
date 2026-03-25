@@ -29,7 +29,6 @@ jobs:
           channel: 'stable'
           cache: true
 
-      # 新しいキーストアをActions内で生成（Java17互換のPKCS12形式）
       - name: Generate keystore
         working-directory: action_quest_fixed/flutter_app
         run: |
@@ -40,20 +39,14 @@ jobs:
             -validity 10000 \
             -keystore android/release-key.jks \
             -storetype PKCS12 \
-            -storepass "ActionQuest2024!" \
-            -keypass "ActionQuest2024!" \
+            -storepass ActionQuest2024 \
+            -keypass ActionQuest2024 \
             -dname "CN=ActionQuest, OU=Game, O=ActionQuest, L=Tokyo, ST=Tokyo, C=JP"
-          echo "JKS size: $(wc -c < android/release-key.jks) bytes"
 
       - name: Create key.properties
         working-directory: action_quest_fixed/flutter_app
         run: |
-          cat > android/key.properties << 'KEYEOF'
-          storePassword=ActionQuest2024!
-          keyPassword=ActionQuest2024!
-          keyAlias=release
-          storeFile=../release-key.jks
-          KEYEOF
+          printf 'storePassword=ActionQuest2024\nkeyPassword=ActionQuest2024\nkeyAlias=release\nstoreFile=../release-key.jks\n' > android/key.properties
 
       - name: Flutter pub get
         working-directory: action_quest_fixed/flutter_app
