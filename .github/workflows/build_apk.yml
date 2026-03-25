@@ -31,6 +31,8 @@ jobs:
 
       - name: Generate keystore
         working-directory: action_quest_fixed/flutter_app
+        env:
+          JAVA_TOOL_OPTIONS: ""
         run: |
           keytool -genkeypair \
             -alias release \
@@ -41,7 +43,9 @@ jobs:
             -storetype PKCS12 \
             -storepass ActionQuest2024 \
             -keypass ActionQuest2024 \
-            -dname "CN=ActionQuest, OU=Game, O=ActionQuest, L=Tokyo, ST=Tokyo, C=JP"
+            -dname "CN=ActionQuest, OU=Game, O=ActionQuest, L=Tokyo, ST=Tokyo, C=JP" \
+            -noprompt
+          echo "JKS size: $(wc -c < android/release-key.jks) bytes"
 
       - name: Create key.properties
         working-directory: action_quest_fixed/flutter_app
