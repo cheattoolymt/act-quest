@@ -14,7 +14,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Extract project ZIP
-        run: unzip action_quest_wifi_fixed.zip
+        run: unzip revenant_binary.zip
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -30,31 +30,31 @@ jobs:
           cache: true
 
       - name: Generate keystore via openssl
-        working-directory: action_quest_fixed/flutter_app/android
+        working-directory: action_quest_fixed_output/flutter_app/android
         run: |
           openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 10000 -nodes \
-            -subj "/CN=ActionQuest/OU=Game/O=ActionQuest/L=Tokyo/ST=Tokyo/C=JP"
+            -subj "/CN=RevenantBinary/OU=Game/O=iaigiri/L=Tokyo/ST=Tokyo/C=JP"
           openssl pkcs12 -export -in cert.pem -inkey key.pem \
             -out release-key.jks -name release \
-            -passout pass:ActionQuest2024
+            -passout pass:RevenantBinary2024
           echo "JKS size: $(wc -c < release-key.jks) bytes"
 
       - name: Create key.properties
-        working-directory: action_quest_fixed/flutter_app
+        working-directory: action_quest_fixed_output/flutter_app
         run: |
-          printf 'storePassword=ActionQuest2024\nkeyPassword=ActionQuest2024\nkeyAlias=release\nstoreFile=../release-key.jks\n' > android/key.properties
+          printf 'storePassword=RevenantBinary2024\nkeyPassword=RevenantBinary2024\nkeyAlias=release\nstoreFile=../release-key.jks\n' > android/key.properties
 
       - name: Flutter pub get
-        working-directory: action_quest_fixed/flutter_app
+        working-directory: action_quest_fixed_output/flutter_app
         run: flutter pub get
 
       - name: Build APK
-        working-directory: action_quest_fixed/flutter_app
+        working-directory: action_quest_fixed_output/flutter_app
         run: flutter build apk --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: action-quest-release
-          path: action_quest_fixed/flutter_app/build/app/outputs/flutter-apk/app-release.apk
+          name: revenant-binary-release
+          path: action_quest_fixed_output/flutter_app/build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
