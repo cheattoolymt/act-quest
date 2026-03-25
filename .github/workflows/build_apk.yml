@@ -1,0 +1,69 @@
+name: Build Release APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. リポジトリをチェックアウト（action_quest_wifi_fixed.zip が入っている）
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. ZIPを展開
+      - name: Extract project ZIP
+        run: unzip action_quest_wifi_fixed.zip
+
+      # 3. Java 17
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 4. Flutter（GitHub Actions側でダウンロード）
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.3'
+          channel: 'stable'
+          cache: true
+
+      # 5. キーストア復元
+      - name: Restore keystore
+        working-directory: action_quest_fixed/flutter_app
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/release-key.jks
+
+      # 6. key.properties 作成
+      - name: Create key.properties
+        working-directory: action_quest_fixed/flutter_app
+        run: |
+          cat > android/key.properties << KEYEOF
+          storePassword=${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=../release-key.jks
+          KEYEOF
+
+      # 7. flutter pub get
+      - name: Flutter pub get
+        working-directory: action_quest_fixed/flutter_app
+        run: flutter pub get
+
+      # 8. APKビルド
+      - name: Build APK
+        working-directory: action_quest_fixed/flutter_app
+        run: flutter build apk --release
+
+      # 9. APKをダウンロード可能にする
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: action-quest-release
+          path: action_quest_fixed/flutter_app/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
