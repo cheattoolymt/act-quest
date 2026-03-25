@@ -29,23 +29,15 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Generate keystore
-        working-directory: action_quest_fixed/flutter_app
-        env:
-          JAVA_TOOL_OPTIONS: ""
+      - name: Generate keystore via openssl
+        working-directory: action_quest_fixed/flutter_app/android
         run: |
-          keytool -genkeypair \
-            -alias release \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -keystore android/release-key.jks \
-            -storetype PKCS12 \
-            -storepass ActionQuest2024 \
-            -keypass ActionQuest2024 \
-            -dname "CN=ActionQuest, OU=Game, O=ActionQuest, L=Tokyo, ST=Tokyo, C=JP" \
-            -noprompt
-          echo "JKS size: $(wc -c < android/release-key.jks) bytes"
+          openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 10000 -nodes \
+            -subj "/CN=ActionQuest/OU=Game/O=ActionQuest/L=Tokyo/ST=Tokyo/C=JP"
+          openssl pkcs12 -export -in cert.pem -inkey key.pem \
+            -out release-key.jks -name release \
+            -passout pass:ActionQuest2024
+          echo "JKS size: $(wc -c < release-key.jks) bytes"
 
       - name: Create key.properties
         working-directory: action_quest_fixed/flutter_app
